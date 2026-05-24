@@ -1,0 +1,8 @@
+{
+  "name": "Корпоративная ИС поддержки решений",
+  "description": "Корпоративная информационная система для поддержки управленческих решений в организации. Разработана в качестве дипломной работы.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
