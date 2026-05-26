@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { LayoutDashboard, Sliders, ShieldAlert, Database, HelpCircle, Building2, Tv, Server, LogOut, UserCheck, ShieldAlert as UserIcon } from "lucide-react";
 
 // Импорт субкомпонентов
@@ -30,11 +30,40 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<"dashboard" | "simulation" | "risks" | "data">("dashboard");
   const [isGuideOpen, setIsGuideOpen] = useState(false);
 
-  // Объединенное реактивно синхронизируемое состояние баз данных
-  const [projects, setProjects] = useState<Project[]>(initialProjects);
-  const [financials, setFinancials] = useState<Financials>(initialFinancials);
-  const [resources, setResources] = useState<Resource[]>(initialResources);
-  const [risksList, setRisksList] = useState<CorporateRisk[]>(initialCorporateRisks);
+  // Объединенное реактивно синхронизируемое состояние баз данных с поддержкой localStorage
+  const [projects, setProjects] = useState<Project[]>(() => {
+    const saved = localStorage.getItem("slomo_dss_projects");
+    return saved ? JSON.parse(saved) : initialProjects;
+  });
+  const [financials, setFinancials] = useState<Financials>(() => {
+    const saved = localStorage.getItem("slomo_dss_financials");
+    return saved ? JSON.parse(saved) : initialFinancials;
+  });
+  const [resources, setResources] = useState<Resource[]>(() => {
+    const saved = localStorage.getItem("slomo_dss_resources");
+    return saved ? JSON.parse(saved) : initialResources;
+  });
+  const [risksList, setRisksList] = useState<CorporateRisk[]>(() => {
+    const saved = localStorage.getItem("slomo_dss_risks");
+    return saved ? JSON.parse(saved) : initialCorporateRisks;
+  });
+
+  // Эффекты автосохранения при любых изменениях данных
+  useEffect(() => {
+    localStorage.setItem("slomo_dss_projects", JSON.stringify(projects));
+  }, [projects]);
+
+  useEffect(() => {
+    localStorage.setItem("slomo_dss_financials", JSON.stringify(financials));
+  }, [financials]);
+
+  useEffect(() => {
+    localStorage.setItem("slomo_dss_resources", JSON.stringify(resources));
+  }, [resources]);
+
+  useEffect(() => {
+    localStorage.setItem("slomo_dss_risks", JSON.stringify(risksList));
+  }, [risksList]);
 
   // Динамические расчеты для шапки (синхронизация с базой проектов)
   const totalFinancialRevenue = projects.reduce(
@@ -43,8 +72,9 @@ export default function App() {
   );
   const syncFinancials = {
     ...financials,
-    // Выручка динамически пересчитывается на базе бюджета запущенных проектов за квартал
-    revenue: totalFinancialRevenue > 0 ? Math.round(totalFinancialRevenue / 4) : financials.revenue
+    // Выручка компании складывается из крупных ИТ-проектов (весом ~65%) и регулярных сервисных контрактов / лицензий (весом ~35%)
+    // Поэтому общий объем признанного проектного дохода масштабируется коэффициентом 1.536 для достижения базового уровня в 62.5 млн руб.
+    revenue: totalFinancialRevenue > 0 ? Math.round(totalFinancialRevenue * 1.536) : financials.revenue
   };
 
   const handleLoginSuccess = (user: UserSession) => {

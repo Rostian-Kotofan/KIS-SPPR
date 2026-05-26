@@ -213,11 +213,18 @@ export function calculateLocalSimulation(
   const simulatedRevenue = actualShippedVolumeAtBasePrices * priceMultiplier;
 
   // 4. Финансовый расчет Затрат (Expenses)
-  // OpEx зависит от объема производства (себестоимость комплектующих: корпуса, платы, SSD, видеокарты)
-  // Но при этом можно оптимизировать OpEx за счет бережливого производства (operationalSavingsFactor)
-  const baseComponentCostRatio = 0.232; // ~23% себестоимость железа
-  const variableCompCost = actualShippedVolumeAtBasePrices * baseComponentCostRatio;
-  const fixedOpEx = (financials.opEx - (financials.revenue * baseComponentCostRatio)) * (1 - scenario.operationalSavingsFactor / 100);
+  // OpEx состоит из условно-постоянных расходов (лицензии, аренда, адм. расходы) и переменных расходов (комплектующие)
+  // Уверенно делим базовый OpEx: 60% — постоянные затраты (подлежат оптимизации), 40% — переменные (зависят от объема выпуска)
+  const fixedOpExBase = financials.opEx * 0.60;
+  const variableOpExBase = financials.opEx * 0.40;
+  
+  // Масштабируем переменные затраты пропорционально физическому объему отгрузки
+  const variableCompCost = variableOpExBase * (actualShippedVolumeAtBasePrices / financials.revenue);
+  
+  // Оптимизируем постоянную часть за счет коэффициента бережливого производства
+  const fixedOpEx = fixedOpExBase * (1 - scenario.operationalSavingsFactor / 100);
+  
+  // Общий прогнозируемый OpEx
   const simulatedOpEx = Math.max(0, fixedOpEx + variableCompCost);
 
   // Новый рекламный бюджет
